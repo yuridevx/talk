@@ -209,6 +209,7 @@ export const settings = createFixture<GQLSettings>({
     strikethrough: false,
     spoiler: false,
   },
+  amp: false,
 });
 
 export const settingsWithEmptyAuth = createFixture<GQLSettings>(
