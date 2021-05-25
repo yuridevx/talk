@@ -58,6 +58,30 @@ convict.addFormat({
   },
 });
 
+// Add a custom format for the allowed origins.
+convict.addFormat({
+  name: "origins",
+  validate: (urls: string[]) => {
+    for (const url of urls) {
+      Joi.assert(url, Joi.string().uri());
+    }
+  },
+  coerce: (list: string) =>
+    compact(
+      list
+        .split(",")
+        .map((i) => i.trim())
+        .map((item) => {
+          if (!item) {
+            return "";
+          }
+
+          const url = new URL(item);
+          return url.origin;
+        })
+    ),
+});
+
 // Add a custom format for a list of comma seperated strings.
 convict.addFormat({
   name: "list",
@@ -433,6 +457,12 @@ const config = convict({
     format: Boolean,
     default: false,
     env: "MOUNT_DOCUMENTATION",
+  },
+  restricted_origins: {
+    doc: "Restrict origins in CORS and comments link validation",
+    format: "origins",
+    default: "",
+    env: "RESTRICTED_ORIGINS",
   },
 });
 
