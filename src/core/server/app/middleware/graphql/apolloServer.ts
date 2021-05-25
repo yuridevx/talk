@@ -12,6 +12,8 @@ import {
 } from "coral-server/graph/plugins";
 import { Request, TenantCoralRequest } from "coral-server/types/express";
 
+import { GetMiddlewareOptions } from "apollo-server-express/dist/ApolloServer";
+import { isUrlAllowed } from "coral-server/helpers";
 import { RedisCache } from "./cache/redis";
 
 type ContextProviderOptions = Omit<AppOptions, "schema" | "metrics">;
@@ -132,6 +134,21 @@ export const apolloGraphQLMiddleware = ({
     debug: false,
   });
 
+  const cors: GetMiddlewareOptions["cors"] = options.config.get(
+    "restricted_origins"
+  )
+    ? {
+        origin: (origin: string | undefined, cb) => {
+          if (!origin) {
+            cb(null, false);
+            return;
+          }
+          cb(null, isUrlAllowed(options.config, origin));
+        },
+        credentials: true,
+      }
+    : true;
+
   // Get the GraphQL middleware.
   return server.getMiddleware({
     // Disable the health check endpoint, Coral does not use this endpoint and
@@ -139,7 +156,7 @@ export const apolloGraphQLMiddleware = ({
     disableHealthCheck: true,
 
     // Disable CORS, Coral does not allow cross origin requests.
-    cors: false,
+    cors,
 
     // Disable the body parser, we will add our own.
     bodyParserConfig: false,
